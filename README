@@ -1,0 +1,43 @@
+RPC ASSIGNMENT ARBERT XU
+
+Remote Procedure Call system implemented in Rust. Supports both synchrounous and 
+asnychrounous execution modes.
+
+Features four core operations:
+1. Hash_compute, SHA-256 hashing over byte data
+2. sort_array, sort on int32 arrays
+3. matrix_multiply, square matrix multiplication for nxn matrices
+4. compress_data, Compression using lz4 or zlib
+
+synchrounous: blocks until given operation is completed
+asnychrounous: Returns with "accepted" response and processes in background
+
+Performance: Handles up to 12000 requests/second under 15ms p95 patency.
+
+Structure divided into Client and Server folder
+Client Folder:
+lib.rs: Contains library for protocol definitions
+load_test.rs: Contains calls to those protocols for testing of RPC server
+
+Server:
+main.rs
+Code for server to connect to client calls
+
+Usage:
+Start server with RUST_LOG=info cargo run --bin server
+
+In a seperate terminal RUST_LOG=info cargo run --bin load_test
+to run tests and see results
+
+Outputs 4 files:
+load_latency_curve.csv
+operational_comparision.csv
+sync_vs_async_comparison.csv
+throuput_analysis.csv
+
+Protocol:
+Uses JSON over TCP for requests and responses.
+Sync mode will return 1 response, the finished task. 
+Async mode will return two jsons, one to notify it has been accepted and 1 to notify of finished task. 
+
+Setup Instructions

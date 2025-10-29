@@ -63,7 +63,7 @@ async fn main() -> Result<()> {
     let listener = TcpListener::bind(&bind_addr)
         .await
         .with_context(|| format!("failed to bind to {bind_addr}"))?;
-    info!("RPC server listening on {}", bind_addr);
+    // info!("RPC server listening on {}", bind_addr);
 
     loop {
         let (socket, peer) = listener.accept().await?;
@@ -73,7 +73,7 @@ async fn main() -> Result<()> {
 
 #[instrument(skip(socket))]
 async fn handle_connection(socket: TcpStream, peer: SocketAddr) {
-    info!(%peer, "client connected");
+    // info!(%peer, "client connected");
     let (mut reader, mut writer) = tokio::io::split(socket);
     let (tx, mut rx) = mpsc::unbounded_channel::<RpcResponse>();
     
@@ -91,7 +91,7 @@ async fn handle_connection(socket: TcpStream, peer: SocketAddr) {
 
     loop {
         if let Err(e) = ensure_read_exact(&mut reader, &mut buf, 4).await {
-            info!(%peer, "client disconnected: {}", e);
+            // info!(%peer, "client disconnected: {}", e);
             break;
         }
 
@@ -118,7 +118,7 @@ async fn handle_connection(socket: TcpStream, peer: SocketAddr) {
         let func_name = req.func.clone();
 
         if req.r#async {
-            info!(%peer, %request_id, "handling async request: {}", func_name);
+            // info!(%peer, %request_id, "handling async request: {}", func_name);
             
             let accepted = RpcResponse {
                 request_id: request_id.clone(),
@@ -132,12 +132,12 @@ async fn handle_connection(socket: TcpStream, peer: SocketAddr) {
                 break;
             }
             
-            info!(%peer, %request_id, "sent accepted response");
+            // info!(%peer, %request_id, "sent accepted response");
 
             tokio::spawn(async move {
-                info!(%request_id, "starting async processing");
+                 // info!(%request_id, "starting async processing");
                 let resp = process_request(req).await;
-                info!(%request_id, ok=%resp.ok, "processing completed, sending response");
+                // info!(%request_id, ok=%resp.ok, "processing completed, sending response");
                 
                 if tx_clone.send(resp).is_err() {
                     error!(%request_id, "failed to send completed");
@@ -150,7 +150,7 @@ async fn handle_connection(socket: TcpStream, peer: SocketAddr) {
                 error!(%peer, "failed to send response");
                 break;
             }
-            info!(%peer, %request_id, "sent sync response");
+            //info!(%peer, %request_id, "sent sync response");
         }
     }
     
@@ -303,7 +303,7 @@ async fn ensure_read_exact(reader: &mut ReadHalf<TcpStream>, buf: &mut BytesMut,
 
 async fn send_response_direct(writer: &mut WriteHalf<TcpStream>, resp: &RpcResponse) -> Result<()> {
     let payload = serde_json::to_vec(resp)?;
-    info!(request_id=%resp.request_id, status=?resp.status, payload_len=%payload.len(), "sending response");
+    // info!(request_id=%resp.request_id, status=?resp.status, payload_len=%payload.len(), "sending response");
     
     let mut frame = Vec::with_capacity(4 + payload.len());
     frame.put_u32(payload.len() as u32);
@@ -312,6 +312,6 @@ async fn send_response_direct(writer: &mut WriteHalf<TcpStream>, resp: &RpcRespo
     writer.write_all(&frame).await?;
     writer.flush().await?;
     
-    info!(request_id=%resp.request_id, "response sent and flushed");
+    // info!(request_id=%resp.request_id, "response sent and flushed");
     Ok(())
 }
